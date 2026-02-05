@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Alphonse AI</title>
+    <title>Alphonse AI - Multimodal</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -35,7 +35,7 @@
         /* CSS Reset & Custom Scrollbar */
         html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
         
-        /* Markdown Content Styles (Restoring default styles Tailwind strips) */
+        /* Markdown Content Styles */
         .prose { font-size: 1rem; line-height: 1.6; color: inherit; max-width: none; }
         .prose p { margin-bottom: 1rem; }
         .prose pre { background: #1e1e1e; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin-bottom: 1rem; }
@@ -49,6 +49,7 @@
         .prose table { border-collapse: collapse; width: 100%; margin-bottom: 1rem; }
         .prose th, .prose td { border: 1px solid #cbd5e1; padding: 0.5rem; text-align: left; }
         .dark .prose th, .dark .prose td { border-color: #475569; }
+        .prose img { max-width: 100%; border-radius: 0.5rem; margin-top: 0.5rem; }
 
         /* Loader Animation */
         .loader-dot { animation: loader 0.6s infinite alternate; }
@@ -58,6 +59,9 @@
 
         /* Mobile Overlay */
         .mobile-overlay { background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
+
+        /* Custom file input trigger */
+        .file-trigger:active { transform: scale(0.95); }
     </style>
 </head>
 <body class="bg-white dark:bg-dark text-slate-800 dark:text-slate-100 antialiased transition-colors duration-200">
@@ -68,7 +72,7 @@
             <div class="w-4 h-4 bg-purple-500 rounded-full loader-dot"></div>
             <div class="w-4 h-4 bg-indigo-500 rounded-full loader-dot"></div>
         </div>
-        <p class="mt-4 text-sm font-medium text-slate-500">Initializing Alphonse...</p>
+        <p class="mt-4 text-sm font-medium text-slate-500">Initializing Alphonse V2...</p>
     </div>
 
     <div id="app" class="flex h-full w-full opacity-0 transition-opacity duration-500">
@@ -112,32 +116,44 @@
                     <i class="ph ph-list text-xl"></i>
                 </button>
                 <span class="font-semibold text-sm">Alphonse</span>
-                <div class="w-8"></div> </header>
+                <div class="w-8"></div>
+            </header>
 
-            <div id="chatContainer" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 scroll-smooth">
+            <div id="chatContainer" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 scroll-smooth pb-32">
                 <div id="welcomeScreen" class="h-full flex flex-col items-center justify-center text-center opacity-70">
                     <div class="w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-500 rounded-2xl flex items-center justify-center mb-4 text-white shadow-lg">
                         <i class="ph-bold ph-sparkle text-3xl"></i>
                     </div>
                     <h2 class="text-2xl font-bold mb-2">Hello, I'm Alphonse</h2>
                     <p class="text-sm text-slate-500 dark:text-slate-400 max-w-md">
-                        How can I help you today? Ensure your API Key is set in settings.
+                        I can analyze images, read files, and write code. <br>
+                        (Use a vision model like 'google/gemini-2.0-flash-lite-preview-02-05:free' for images)
                     </p>
                 </div>
-                </div>
+            </div>
 
-            <div class="p-4 bg-white dark:bg-dark">
+            <div class="absolute bottom-0 left-0 w-full p-4 bg-white dark:bg-dark bg-opacity-95 backdrop-blur-sm border-t border-slate-100 dark:border-slate-800">
                 <div class="max-w-3xl mx-auto relative">
+                    
                     <div id="typingIndicator" class="absolute -top-8 left-0 text-xs text-slate-400 hidden flex items-center gap-1">
                         <i class="ph-fill ph-circle-notch animate-spin"></i> Alphonse is thinking...
                     </div>
 
+                    <div id="attachmentPreview" class="flex gap-2 mb-2 overflow-x-auto hidden">
+                        </div>
+
                     <div class="flex items-end gap-2 bg-slate-100 dark:bg-slate-800 rounded-[26px] p-2 border border-transparent focus-within:border-slate-300 dark:focus-within:border-slate-600 transition-colors">
+                        
+                        <button onclick="document.getElementById('fileInput').click()" class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all file-trigger" title="Upload Image or Text File">
+                            <i class="ph-bold ph-paperclip text-lg"></i>
+                        </button>
+                        <input type="file" id="fileInput" hidden multiple accept="image/*,.txt,.md,.js,.py,.html,.css,.json,.csv,.log">
+
                         <textarea 
                             id="userInput" 
                             rows="1" 
                             placeholder="Ask me anything..." 
-                            class="w-full bg-transparent border-none text-slate-800 dark:text-slate-100 placeholder-slate-500 focus:ring-0 resize-none py-3 px-4 max-h-32 overflow-y-auto"
+                            class="w-full bg-transparent border-none text-slate-800 dark:text-slate-100 placeholder-slate-500 focus:ring-0 resize-none py-3 px-2 max-h-32 overflow-y-auto"
                             style="min-height: 48px;"
                         ></textarea>
                         
@@ -146,7 +162,7 @@
                         </button>
                     </div>
                     <div class="text-center mt-2">
-                        <p class="text-[10px] text-slate-400">Alphonse may display inaccurate info. Check important info.</p>
+                        <p class="text-[10px] text-slate-400">Attach images or text files (Code, CSV, Logs). Large files may affect performance.</p>
                     </div>
                 </div>
             </div>
@@ -165,12 +181,12 @@
                 <div>
                     <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">OpenRouter API Key</label>
                     <input type="password" id="apiKeyInput" placeholder="sk-or-..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition">
-                    <p class="text-[10px] text-slate-400 mt-1">Key is stored locally in your browser.</p>
                 </div>
 
                 <div>
                     <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Model ID</label>
                     <input type="text" id="modelInput" placeholder="deepseek/deepseek-r1:free" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition">
+                    <p class="text-[10px] text-slate-400 mt-1">For Images use: <b>google/gemini-2.0-flash-lite-preview-02-05:free</b> or <b>openai/gpt-4o</b></p>
                 </div>
 
                 <div>
@@ -201,37 +217,43 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- CONSTANTS & STATE ---
-            const DEFAULT_MODEL = 'deepseek/deepseek-r1:free';
+            const DEFAULT_MODEL = 'deepseek/deepseek-r1:free'; // Good for text, bad for images
             const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
             
             const state = {
                 apiKey: localStorage.getItem('alphonse_key') || '',
                 model: localStorage.getItem('alphonse_model') || DEFAULT_MODEL,
-                systemPrompt: localStorage.getItem('alphonse_sys') || 'You are Alphonse, a helpful and capable AI assistant.',
-                chats: JSON.parse(localStorage.getItem('alphonse_chats') || '[]'),
+                systemPrompt: localStorage.getItem('alphonse_sys') || 'You are Alphonse, a helpful AI assistant. When analyzing files, be concise.',
+                chats: [], // Loaded below
                 currentChatId: null,
                 theme: localStorage.getItem('alphonse_theme') || 'light',
-                isGenerating: false
+                isGenerating: false,
+                attachments: [] // Stores current upload candidates
             };
+
+            // Safe Load Chats (Handle LocalStorage Limits)
+            try {
+                state.chats = JSON.parse(localStorage.getItem('alphonse_chats') || '[]');
+            } catch (e) {
+                console.error("Failed to load chats", e);
+                state.chats = [];
+            }
 
             // --- DOM ELEMENTS ---
             const els = {
                 app: document.getElementById('app'),
                 loading: document.getElementById('loading'),
-                // Sidebar
                 sidebar: document.getElementById('sidebar'),
                 sidebarOverlay: document.getElementById('sidebarOverlay'),
                 openSidebar: document.getElementById('openSidebar'),
                 closeSidebar: document.getElementById('closeSidebar'),
                 chatHistoryList: document.getElementById('chatHistoryList'),
                 newChatBtn: document.getElementById('newChatBtn'),
-                // Main Chat
                 chatContainer: document.getElementById('chatContainer'),
                 welcomeScreen: document.getElementById('welcomeScreen'),
                 userInput: document.getElementById('userInput'),
                 sendBtn: document.getElementById('sendBtn'),
                 typingIndicator: document.getElementById('typingIndicator'),
-                // Settings
                 settingsModal: document.getElementById('settingsModal'),
                 settingsBtn: document.getElementById('settingsBtn'),
                 closeSettingsBtn: document.getElementById('closeSettingsBtn'),
@@ -242,11 +264,12 @@
                 systemPromptInput: document.getElementById('systemPromptInput'),
                 themeToggle: document.getElementById('themeToggle'),
                 clearDataBtn: document.getElementById('clearDataBtn'),
+                fileInput: document.getElementById('fileInput'),
+                attachmentPreview: document.getElementById('attachmentPreview')
             };
 
             // --- INITIALIZATION ---
             function init() {
-                // Theme
                 if (state.theme === 'dark' || (!state.theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                     document.documentElement.classList.add('dark');
                     state.theme = 'dark';
@@ -255,7 +278,6 @@
                     state.theme = 'light';
                 }
 
-                // Marked config
                 marked.setOptions({
                     highlight: function(code, lang) {
                         const language = highlight.getLanguage(lang) ? lang : 'plaintext';
@@ -267,62 +289,106 @@
 
                 renderSidebar();
 
-                // If no chats, create one or show welcome
-                if (state.chats.length > 0) {
-                    loadChat(state.chats[0].id);
-                } else {
-                    showWelcome();
-                }
+                if (state.chats.length > 0) loadChat(state.chats[0].id);
+                else showWelcome();
 
-                // Inputs
                 els.apiKeyInput.value = state.apiKey;
                 els.modelInput.value = state.model;
                 els.systemPromptInput.value = state.systemPrompt;
 
-                // Remove Loader
                 setTimeout(() => {
                     els.loading.style.display = 'none';
                     els.app.classList.remove('opacity-0');
                     els.app.classList.remove('hidden');
                 }, 500);
 
-                // Check API Key
-                if (!state.apiKey) {
-                    toggleSettings(true);
-                }
+                if (!state.apiKey) toggleSettings(true);
             }
 
-            // --- RENDER FUNCTIONS ---
-            function renderSidebar() {
-                els.chatHistoryList.innerHTML = '';
-                
-                // Group by dates could go here, keeping it simple
-                state.chats.forEach(chat => {
-                    const isActive = chat.id === state.currentChatId;
-                    const div = document.createElement('div');
-                    div.className = `group flex items-center justify-between p-3 rounded-lg cursor-pointer text-sm transition-colors ${isActive ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-medium' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'}`;
+            // --- FILE HANDLING ---
+            els.fileInput.addEventListener('change', async (e) => {
+                const files = Array.from(e.target.files);
+                if(files.length === 0) return;
+
+                // Process files
+                for (const file of files) {
+                    if (file.size > 2 * 1024 * 1024) { // 2MB Limit soft check
+                        alert(`File ${file.name} is too large. Browser may freeze.`);
+                    }
                     
-                    div.innerHTML = `
-                        <div class="flex items-center gap-3 overflow-hidden" onclick="loadChat('${chat.id}')">
-                            <i class="ph ${isActive ? 'ph-chat-circle-text' : 'ph-chat-circle'} text-lg shrink-0"></i>
-                            <span class="truncate">${escapeHtml(chat.title || 'New Chat')}</span>
-                        </div>
-                        <div class="opacity-0 group-hover:opacity-100 flex items-center gap-1">
-                            <button class="p-1 hover:text-red-500" onclick="deleteChat('${chat.id}', event)"><i class="ph ph-trash"></i></button>
-                        </div>
-                    `;
-                    els.chatHistoryList.appendChild(div);
+                    try {
+                        const fileData = await readFile(file);
+                        state.attachments.push(fileData);
+                    } catch (err) {
+                        console.error("Error reading file", err);
+                        alert(`Could not read ${file.name}`);
+                    }
+                }
+                
+                els.fileInput.value = ''; // Reset
+                renderAttachments();
+            });
+
+            function readFile(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    
+                    if (file.type.startsWith('image/')) {
+                        reader.onload = () => resolve({ type: 'image', name: file.name, data: reader.result });
+                        reader.readAsDataURL(file);
+                    } else {
+                        // Assume text/code
+                        reader.onload = () => resolve({ type: 'text', name: file.name, data: reader.result });
+                        reader.readAsText(file);
+                    }
+                    reader.onerror = reject;
                 });
             }
 
+            function renderAttachments() {
+                els.attachmentPreview.innerHTML = '';
+                if (state.attachments.length === 0) {
+                    els.attachmentPreview.classList.add('hidden');
+                    return;
+                }
+
+                els.attachmentPreview.classList.remove('hidden');
+                
+                state.attachments.forEach((att, index) => {
+                    const div = document.createElement('div');
+                    div.className = "relative flex-shrink-0 w-20 h-20 bg-slate-200 dark:bg-slate-700 rounded-lg overflow-hidden border border-slate-300 dark:border-slate-600 flex items-center justify-center";
+                    
+                    if (att.type === 'image') {
+                        div.innerHTML = `<img src="${att.data}" class="w-full h-full object-cover">`;
+                    } else {
+                        div.innerHTML = `
+                            <div class="flex flex-col items-center p-1 text-center">
+                                <i class="ph-bold ph-file-text text-xl"></i>
+                                <span class="text-[9px] truncate w-full mt-1">${att.name}</span>
+                            </div>`;
+                    }
+
+                    // Delete button
+                    const btn = document.createElement('button');
+                    btn.className = "absolute top-0 right-0 bg-red-500 text-white rounded-bl-lg p-1 hover:bg-red-600";
+                    btn.innerHTML = "<i class='ph-bold ph-x text-xs'></i>";
+                    btn.onclick = () => {
+                        state.attachments.splice(index, 1);
+                        renderAttachments();
+                    };
+
+                    div.appendChild(btn);
+                    els.attachmentPreview.appendChild(div);
+                });
+            }
+
+            // --- RENDER CHAT ---
             function renderChat(chatId) {
                 const chat = state.chats.find(c => c.id === chatId);
                 if (!chat) return;
 
                 els.chatContainer.innerHTML = '';
                 
-                // Add System Prompt as hidden or subtle info? Skipping for UI cleanliness
-                // Just render messages
                 chat.messages.forEach(msg => {
                     appendMessageToDOM(msg.role, msg.content, false);
                 });
@@ -330,6 +396,7 @@
                 scrollToBottom();
             }
 
+            // Updated DOM appender to handle Multi-modal arrays
             function appendMessageToDOM(role, content, animate = false) {
                 const isUser = role === 'user';
                 const msgDiv = document.createElement('div');
@@ -342,10 +409,25 @@
                     : 'bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-bl-sm prose dark:prose-invert'
                 }`;
 
-                if (isUser) {
-                    bubble.textContent = content; // User text is plain
-                } else {
-                    bubble.innerHTML = marked.parse(content); // AI is markdown
+                // Handle Mixed Content (User sent images/text)
+                if (Array.isArray(content)) {
+                    let html = '';
+                    content.forEach(part => {
+                        if (part.type === 'image_url') {
+                            html += `<div class="mb-2"><img src="${part.image_url.url}" class="rounded-lg max-h-60 border border-white/20"></div>`;
+                        } else if (part.type === 'text') {
+                            html += `<p>${part.text}</p>`;
+                        }
+                    });
+                    bubble.innerHTML = html;
+                } 
+                // Handle Standard String (AI or simple User text)
+                else {
+                    if (isUser) {
+                        bubble.textContent = content; 
+                    } else {
+                        bubble.innerHTML = marked.parse(content);
+                    }
                 }
 
                 msgDiv.appendChild(bubble);
@@ -356,7 +438,7 @@
                     setTimeout(() => msgDiv.classList.remove('opacity-0', 'translate-y-2'), 10);
                 }
 
-                return bubble; // Return for streaming updates
+                return bubble;
             }
 
             function scrollToBottom() {
@@ -371,8 +453,6 @@
             }
 
             // --- CORE LOGIC ---
-
-            // Create New Chat
             function createChat(initialTitle = 'New Chat') {
                 const newId = Date.now().toString();
                 const newChat = {
@@ -386,15 +466,13 @@
                 return newId;
             }
 
-            // Load Chat
-            window.loadChat = (id) => { // Exposed to window for inline onclick
+            window.loadChat = (id) => {
                 state.currentChatId = id;
                 renderSidebar();
                 renderChat(id);
                 if(window.innerWidth < 768) toggleSidebar(false);
             };
 
-            // Delete Chat
             window.deleteChat = (id, event) => {
                 event.stopPropagation();
                 if(!confirm('Delete this chat?')) return;
@@ -408,10 +486,12 @@
                 }
             };
 
-            // Send Message & Stream
+            // --- SEND MESSAGE LOGIC (Updated for files) ---
             async function handleSend() {
                 const text = els.userInput.value.trim();
-                if (!text || state.isGenerating) return;
+                const hasAttachments = state.attachments.length > 0;
+
+                if ((!text && !hasAttachments) || state.isGenerating) return;
                 
                 if (!state.apiKey) {
                     alert('Please set your OpenRouter API Key in Settings.');
@@ -420,202 +500,32 @@
                 }
 
                 els.userInput.value = '';
-                els.userInput.style.height = 'auto'; // Reset height
+                els.userInput.style.height = 'auto'; 
                 
-                // Ensure active chat
-                if (!state.currentChatId) {
-                    createChat(text.substring(0, 30) + '...');
-                }
+                // Determine Payload Structure
+                let userContent;
 
-                const chat = state.chats.find(c => c.id === state.currentChatId);
-                
-                // Add User Message
-                chat.messages.push({ role: 'user', content: text });
-                appendMessageToDOM('user', text, true);
-                scrollToBottom();
-
-                // Prepare AI State
-                state.isGenerating = true;
-                els.sendBtn.disabled = true;
-                els.typingIndicator.classList.remove('hidden');
-
-                // Create placeholder for AI response
-                const aiMsgDiv = document.createElement('div');
-                aiMsgDiv.className = `flex w-full justify-start mt-4`;
-                const aiBubble = document.createElement('div');
-                aiBubble.className = `max-w-[85%] md:max-w-[75%] rounded-2xl px-4 py-3 text-sm md:text-base shadow-sm bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-bl-sm prose dark:prose-invert`;
-                aiMsgDiv.appendChild(aiBubble);
-                els.chatContainer.appendChild(aiMsgDiv);
-
-                let fullResponse = "";
-                let buffer = ""; // For smooth markdown rendering
-
-                try {
-                    const messages = [
-                        { role: 'system', content: state.systemPrompt },
-                        ...chat.messages
-                    ];
-
-                    const response = await fetch(API_URL, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${state.apiKey}`,
-                            'HTTP-Referer': window.location.href,
-                            'X-Title': 'Alphonse AI',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            model: state.model,
-                            messages: messages,
-                            stream: true
-                        })
-                    });
-
-                    if (!response.ok) throw new Error('API Error: ' + response.statusText);
-
-                    const reader = response.body.getReader();
-                    const decoder = new TextDecoder();
-
-                    while (true) {
-                        const { done, value } = await reader.read();
-                        if (done) break;
-
-                        const chunk = decoder.decode(value, { stream: true });
-                        const lines = chunk.split('\n');
-
-                        for (const line of lines) {
-                            if (line.startsWith('data: ') && line !== 'data: [DONE]') {
-                                try {
-                                    const json = JSON.parse(line.substring(6));
-                                    const content = json.choices[0]?.delta?.content || "";
-                                    fullResponse += content;
-                                    
-                                    // Live Render
-                                    aiBubble.innerHTML = marked.parse(fullResponse);
-                                    
-                                    // Auto-scroll if near bottom
-                                    const isNearBottom = els.chatContainer.scrollHeight - els.chatContainer.scrollTop - els.chatContainer.clientHeight < 100;
-                                    if(isNearBottom) scrollToBottom();
-
-                                } catch (e) {
-                                    // JSON parse error on chunk boundary, ignore
-                                }
-                            }
+                if (hasAttachments) {
+                    // Start mixed content array
+                    userContent = [];
+                    // Add text if exists
+                    if (text) userContent.push({ type: "text", text: text });
+                    
+                    // Add attachments
+                    state.attachments.forEach(att => {
+                        if (att.type === 'image') {
+                            // Vision API Format
+                            userContent.push({
+                                type: "image_url",
+                                image_url: { url: att.data }
+                            });
+                        } else {
+                            // Text file: Append content contextually
+                            userContent.push({
+                                type: "text",
+                                text: `\n--- FILE: ${att.name} ---\n${att.data}\n--- END FILE ---\n`
+                            });
                         }
-                    }
-
-                    // Save AI Message
-                    chat.messages.push({ role: 'assistant', content: fullResponse });
-                    saveChats();
-
-                } catch (error) {
-                    aiBubble.innerHTML += `<p class="text-red-500 mt-2">Error: ${error.message}</p>`;
-                    chat.messages.push({ role: 'assistant', content: fullResponse + `\n[Error: ${error.message}]` });
-                    saveChats();
-                } finally {
-                    state.isGenerating = false;
-                    els.sendBtn.disabled = false;
-                    els.typingIndicator.classList.add('hidden');
-                    // Final Highlight
-                    aiBubble.querySelectorAll('pre code').forEach((block) => {
-                        hljs.highlightElement(block);
                     });
-                    scrollToBottom();
-                }
-            }
-
-            // --- UTILITIES ---
-            function saveChats() {
-                localStorage.setItem('alphonse_chats', JSON.stringify(state.chats));
-                renderSidebar();
-            }
-
-            function escapeHtml(text) {
-                const div = document.createElement('div');
-                div.textContent = text;
-                return div.innerHTML;
-            }
-
-            function toggleSidebar(show) {
-                if (show) {
-                    els.sidebar.classList.remove('-translate-x-full');
-                    els.sidebarOverlay.classList.remove('hidden');
                 } else {
-                    els.sidebar.classList.add('-translate-x-full');
-                    els.sidebarOverlay.classList.add('hidden');
-                }
-            }
-
-            function toggleSettings(show) {
-                if (show) els.settingsModal.classList.remove('hidden');
-                else els.settingsModal.classList.add('hidden');
-            }
-
-            // --- EVENT LISTENERS ---
-            
-            // Sidebar
-            els.openSidebar.addEventListener('click', () => toggleSidebar(true));
-            els.closeSidebar.addEventListener('click', () => toggleSidebar(false));
-            els.sidebarOverlay.addEventListener('click', () => toggleSidebar(false));
-            els.newChatBtn.addEventListener('click', () => {
-                createChat();
-                if(window.innerWidth < 768) toggleSidebar(false);
-            });
-
-            // Settings
-            els.settingsBtn.addEventListener('click', () => toggleSettings(true));
-            els.closeSettingsBtn.addEventListener('click', () => toggleSettings(false));
-            els.closeSettingsBg.addEventListener('click', () => toggleSettings(false));
-            
-            els.saveSettingsBtn.addEventListener('click', () => {
-                state.apiKey = els.apiKeyInput.value.trim();
-                state.model = els.modelInput.value.trim() || DEFAULT_MODEL;
-                state.systemPrompt = els.systemPromptInput.value.trim();
-                
-                localStorage.setItem('alphonse_key', state.apiKey);
-                localStorage.setItem('alphonse_model', state.model);
-                localStorage.setItem('alphonse_sys', state.systemPrompt);
-                
-                toggleSettings(false);
-                alert('Settings Saved');
-            });
-
-            els.themeToggle.addEventListener('click', () => {
-                if (state.theme === 'light') {
-                    state.theme = 'dark';
-                    document.documentElement.classList.add('dark');
-                } else {
-                    state.theme = 'light';
-                    document.documentElement.classList.remove('dark');
-                }
-                localStorage.setItem('alphonse_theme', state.theme);
-            });
-
-            els.clearDataBtn.addEventListener('click', () => {
-                if(confirm('This will wipe all chats and API keys. Are you sure?')) {
-                    localStorage.clear();
-                    window.location.reload();
-                }
-            });
-
-            // Input Handling
-            els.userInput.addEventListener('input', function() {
-                this.style.height = 'auto';
-                this.style.height = (this.scrollHeight) + 'px';
-            });
-
-            els.userInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend();
-                }
-            });
-
-            els.sendBtn.addEventListener('click', handleSend);
-
-            // Start App
-            init();
-        });
-    </script>
-</body>
-</html>
+                    userContent = text; //
